@@ -1,5 +1,6 @@
 
 import RecipeCard from '../components/RecipeCard';
+import { Link } from 'react-router-dom';
 
 function Home() {
 
@@ -30,7 +31,10 @@ function Home() {
     return (
         <div>
 
+            {/* Hero Section */}
+
             <section className="hero">
+
                 <h1>Discover Delicious Recipes</h1>
 
                 <p>
@@ -38,10 +42,13 @@ function Home() {
                     your favourite food.
                 </p>
 
-                <button className="explore-btn">
+                <Link to="/recipes" className="explore-btn">
                     Explore Recipes
-                </button>
+                </Link>
+
             </section>
+
+            {/* Featured Recipes */}
 
             <section className="recipes-section" id="recipes">
 
@@ -58,7 +65,17 @@ function Home() {
 
                 </div>
 
+                <div className="view-all-recipes">
+
+                    <Link to="/recipes" className="explore-btn">
+                        View All Recipes
+                    </Link>
+
+                </div>
+
             </section>
+
+            {/* About Section */}
 
             <section className="about-section" id="about">
 

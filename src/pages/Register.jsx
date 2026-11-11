@@ -1,9 +1,10 @@
+
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
 function Register() {
 
-    // Store the user's form details
+    // Store user's form details
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -11,11 +12,18 @@ function Register() {
         confirmPassword: ''
     });
 
-    // Store error messages
+    // Store validation errors
     const [errors, setErrors] = useState({});
 
     // Store success message
     const [success, setSuccess] = useState('');
+
+    // Show or hide passwords
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Loading state
+    const [isLoading, setIsLoading] = useState(false);
 
     // Handle input changes
     function handleChange(e) {
@@ -27,35 +35,49 @@ function Register() {
             [name]: value
         });
 
-        setErrors({});
+        // Clear only the current field error
+        setErrors({
+            ...errors,
+            [name]: ''
+        });
+
         setSuccess('');
     }
 
-    // Validate and submit form
-    function handleSubmit(e) {
-
-        e.preventDefault();
+    // Validate registration form
+    function validateForm() {
 
         const newErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = 'Name is required';
+        const name = formData.name.trim();
+        const email = formData.email.trim();
+
+        // Name validation
+        if (!name) {
+            newErrors.name = 'Full name is required';
+        } else if (name.length < 2) {
+            newErrors.name = 'Name must contain at least 2 characters';
+        } else if (!/^[a-zA-Z ]+$/.test(name)) {
+            newErrors.name = 'Name can contain only letters and spaces';
         }
 
-        if (!formData.email.trim()) {
+        // Email validation
+        if (!email) {
             newErrors.email = 'Email is required';
         } else if (
-            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
         ) {
             newErrors.email = 'Enter a valid email address';
         }
 
+        // Password validation
         if (!formData.password) {
             newErrors.password = 'Password is required';
         } else if (formData.password.length < 8) {
             newErrors.password = 'Password must contain at least 8 characters';
         }
 
+        // Confirm password validation
         if (!formData.confirmPassword) {
             newErrors.confirmPassword = 'Please confirm your password';
         } else if (
@@ -64,22 +86,49 @@ function Register() {
             newErrors.confirmPassword = 'Passwords do not match';
         }
 
+        return newErrors;
+    }
+
+    // Handle form submission
+    function handleSubmit(e) {
+
+        e.preventDefault();
+
+        const newErrors = validateForm();
+
         setErrors(newErrors);
+        setSuccess('');
 
-        if (Object.keys(newErrors).length === 0) {
+        // Stop if validation fails
+        if (Object.keys(newErrors).length > 0) {
+            return;
+        }
 
-            setSuccess('Registration form submitted successfully!');
+        // Frontend demo only
+        // Backend registration API will be connected later
+        setIsLoading(true);
 
+        setTimeout(() => {
+
+            setIsLoading(false);
+
+            setSuccess(
+                'Registration form validation successful! Backend API is not connected yet.'
+            );
+
+            // Clear form after successful validation
             setFormData({
                 name: '',
                 email: '',
                 password: '',
                 confirmPassword: ''
             });
-        }
+
+        }, 500);
     }
 
     return (
+
         <div className="register-page">
 
             <div className="register-card">
@@ -88,75 +137,148 @@ function Register() {
 
                 <p>Join our Cooking Recipe Portal</p>
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
 
-                    <label>Full Name</label>
+                    {/* Full Name */}
+                    <label htmlFor="register-name">
+                        Full Name
+                    </label>
 
                     <input
+                        id="register-name"
                         type="text"
                         name="name"
                         placeholder="Enter your full name"
                         value={formData.name}
                         onChange={handleChange}
+                        autoComplete="name"
+                        aria-invalid={Boolean(errors.name)}
                     />
 
                     {errors.name && (
-                        <span className="error">{errors.name}</span>
+                        <span className="error" role="alert">
+                            {errors.name}
+                        </span>
                     )}
 
-                    <label>Email Address</label>
+                    {/* Email */}
+                    <label htmlFor="register-email">
+                        Email Address
+                    </label>
 
                     <input
+                        id="register-email"
                         type="email"
                         name="email"
                         placeholder="Enter your email"
                         value={formData.email}
                         onChange={handleChange}
+                        autoComplete="email"
+                        aria-invalid={Boolean(errors.email)}
                     />
 
                     {errors.email && (
-                        <span className="error">{errors.email}</span>
+                        <span className="error" role="alert">
+                            {errors.email}
+                        </span>
                     )}
 
-                    <label>Password</label>
+                    {/* Password */}
+                    <label htmlFor="register-password">
+                        Password
+                    </label>
 
                     <input
-                        type="password"
+                        id="register-password"
+                        type={showPassword ? 'text' : 'password'}
                         name="password"
                         placeholder="Create a password"
                         value={formData.password}
                         onChange={handleChange}
+                        autoComplete="new-password"
+                        aria-invalid={Boolean(errors.password)}
                     />
 
                     {errors.password && (
-                        <span className="error">{errors.password}</span>
+                        <span className="error" role="alert">
+                            {errors.password}
+                        </span>
                     )}
 
-                    <label>Confirm Password</label>
+                    <div className="show-password">
+
+                        <input
+                            id="show-register-password"
+                            type="checkbox"
+                            checked={showPassword}
+                            onChange={(e) =>
+                                setShowPassword(e.target.checked)
+                            }
+                        />
+
+                        <label htmlFor="show-register-password">
+                            Show Password
+                        </label>
+
+                    </div>
+
+                    {/* Confirm Password */}
+                    <label htmlFor="confirm-password">
+                        Confirm Password
+                    </label>
 
                     <input
-                        type="password"
+                        id="confirm-password"
+                        type={showConfirmPassword ? 'text' : 'password'}
                         name="confirmPassword"
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChange={handleChange}
+                        autoComplete="new-password"
+                        aria-invalid={Boolean(errors.confirmPassword)}
                     />
 
                     {errors.confirmPassword && (
-                        <span className="error">
+                        <span className="error" role="alert">
                             {errors.confirmPassword}
                         </span>
                     )}
 
-                    <button type="submit" className="register-btn">
-                        Register
+                    <div className="show-password">
+
+                        <input
+                            id="show-confirm-password"
+                            type="checkbox"
+                            checked={showConfirmPassword}
+                            onChange={(e) =>
+                                setShowConfirmPassword(e.target.checked)
+                            }
+                        />
+
+                        <label htmlFor="show-confirm-password">
+                            Show Confirm Password
+                        </label>
+
+                    </div>
+
+                    {/* Register Button */}
+                    <button
+                        type="submit"
+                        className="register-btn"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Please wait...' : 'Register'}
                     </button>
 
+                    {/* Success Message */}
                     {success && (
-                        <p className="success">{success}</p>
+                        <p className="success" role="status">
+                            {success}
+                        </p>
                     )}
 
                 </form>
+
                 <p className="register-link">
                     Already have an account?
                     <Link to="/login"> Login here</Link>
