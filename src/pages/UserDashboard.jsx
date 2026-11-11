@@ -1,33 +1,39 @@
-import { useEffect, useState } from 'react';
+
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { recipes } from '../data/recipes';
+
+// Read favorite count from localStorage
+function loadFavoriteCount() {
+
+    try {
+
+        const savedFavorites = localStorage.getItem('favorites');
+
+        if (!savedFavorites) {
+            return 0;
+        }
+
+        const favoriteIds = JSON.parse(savedFavorites);
+
+        return Array.isArray(favoriteIds) ? favoriteIds.length : 0;
+
+    } catch (error) {
+
+        console.error('Unable to load favorites:', error);
+
+        return 0;
+
+    }
+
+}
 
 function UserDashboard() {
 
     const { user } = useAuth();
 
-    const [favoriteCount, setFavoriteCount] = useState(0);
-
-    // Read the actual favorites saved in localStorage
-    useEffect(() => {
-
-        const savedFavorites = localStorage.getItem('favorites');
-
-        if (savedFavorites) {
-            try {
-                const favoriteIds = JSON.parse(savedFavorites);
-                setFavoriteCount(
-                    Array.isArray(favoriteIds) ? favoriteIds.length : 0
-                );
-            } catch {
-                setFavoriteCount(0);
-            }
-        } else {
-            setFavoriteCount(0);
-        }
-
-    }, []);
+    const [favoriteCount] = useState(loadFavoriteCount);
 
     // Calculate categories from the recipe data
     const categoryCount = new Set(
@@ -93,7 +99,6 @@ function UserDashboard() {
         <div className="user-dashboard">
 
             {/* Welcome Section */}
-
             <section className="dashboard-welcome">
 
                 <div>
@@ -118,9 +123,7 @@ function UserDashboard() {
 
             </section>
 
-
             {/* Dynamic Statistics */}
-
             <section className="dashboard-stats">
 
                 <h2>My Statistics</h2>
@@ -150,9 +153,7 @@ function UserDashboard() {
 
             </section>
 
-
             {/* Quick Links */}
-
             <section className="dashboard-quick-links">
 
                 <h2>Quick Access</h2>
@@ -199,9 +200,7 @@ function UserDashboard() {
 
             </section>
 
-
             {/* Recent Activity */}
-
             <section className="dashboard-activity">
 
                 <h2>Recent Activity</h2>

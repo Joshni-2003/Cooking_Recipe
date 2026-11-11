@@ -1,4 +1,6 @@
 
+/* eslint-disable react-refresh/only-export-components */
+
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const FavoritesContext = createContext();
@@ -6,9 +8,15 @@ const FavoritesContext = createContext();
 export function FavoritesProvider({ children }) {
 
     const [favorites, setFavorites] = useState(() => {
-        const savedFavorites = localStorage.getItem('favorites');
+        try {
+            const savedFavorites = localStorage.getItem('favorites');
 
-        return savedFavorites ? JSON.parse(savedFavorites) : [];
+            return savedFavorites ? JSON.parse(savedFavorites) : [];
+
+        } catch (error) {
+            console.error('Unable to load favorites:', error);
+            return [];
+        }
     });
 
     // Save favorites whenever the list changes

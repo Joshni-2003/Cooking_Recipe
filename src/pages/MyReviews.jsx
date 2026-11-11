@@ -1,32 +1,60 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const STORAGE_KEY = 'my-reviews-data';
+
+const defaultReviews = [
+    {
+        id: 1,
+        recipeName: 'Vegetable Biryani',
+        rating: 5,
+        comment: 'Very tasty and easy to prepare!'
+    },
+    {
+        id: 2,
+        recipeName: 'Chocolate Cake',
+        rating: 4,
+        comment: 'The cake was delicious. I really enjoyed it.'
+    },
+    {
+        id: 3,
+        recipeName: 'Masala Dosa',
+        rating: 3,
+        comment: 'Good recipe, but the instructions could be clearer.'
+    }
+];
 
 function MyReviews() {
 
-    const [reviews, setReviews] = useState([
-        {
-            id: 1,
-            recipeName: 'Vegetable Biryani',
-            rating: 5,
-            comment: 'Very tasty and easy to prepare!'
-        },
-        {
-            id: 2,
-            recipeName: 'Chocolate Cake',
-            rating: 4,
-            comment: 'The cake was delicious. I really enjoyed it.'
-        },
-        {
-            id: 3,
-            recipeName: 'Masala Dosa',
-            rating: 3,
-            comment: 'Good recipe, but the instructions could be clearer.'
+    // Load saved reviews when the page opens
+    const [reviews, setReviews] = useState(() => {
+        try {
+            const savedReviews = localStorage.getItem(STORAGE_KEY);
+
+            return savedReviews !== null
+                ? JSON.parse(savedReviews)
+                : defaultReviews;
+        } catch (error) {
+            console.error('Unable to load reviews:', error);
+            return defaultReviews;
         }
-    ]);
+    });
 
     const [filter, setFilter] = useState('All');
     const [editingReview, setEditingReview] = useState(null);
     const [message, setMessage] = useState('');
+
+    // Save reviews whenever they change
+    useEffect(() => {
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(reviews)
+            );
+        } catch (error) {
+            console.error('Unable to save reviews:', error);
+        }
+    }, [reviews]);
 
     // Filter reviews by rating
     const filteredReviews = reviews.filter((review) => {
@@ -47,10 +75,10 @@ function MyReviews() {
     function handleChange(e) {
         const { name, value } = e.target;
 
-        setEditingReview({
-            ...editingReview,
+        setEditingReview((previousReview) => ({
+            ...previousReview,
             [name]: name === 'rating' ? Number(value) : value
-        });
+        }));
     }
 
     // Save updated review
@@ -85,6 +113,10 @@ function MyReviews() {
                 previousReviews.filter((review) => review.id !== id)
             );
 
+            if (editingReview?.id === id) {
+                setEditingReview(null);
+            }
+
             setMessage('Review deleted successfully!');
         }
     }
@@ -98,7 +130,7 @@ function MyReviews() {
             </div>
 
             {message && (
-                <p className="my-reviews-message">
+                <p className="my-reviews-message" role="status">
                     {message}
                 </p>
             )}
@@ -197,42 +229,53 @@ function MyReviews() {
 
                 ) : (
 
-                    filteredReviews.map((review) => (
+                    filteredReviews.map((review) => {
 
-                        <div className="my-review-card" key={review.id}>
+                        const safeRating = Math.min(
+                            5,
+                            Math.max(0, Number(review.rating) || 0)
+                        );
 
-                            <h2>{review.recipeName}</h2>
+                        return (
+                            <div
+                                className="my-review-card"
+                                key={review.id}
+                            >
 
-                            <p className="review-stars">
-                                {'★'.repeat(review.rating)}
-                                {'☆'.repeat(5 - review.rating)}
-                            </p>
+                                <h2>{review.recipeName}</h2>
 
-                            <p className="review-comment">
-                                {review.comment}
-                            </p>
+                                <p className="review-stars">
+                                    {'★'.repeat(safeRating)}
+                                    {'☆'.repeat(5 - safeRating)}
+                                </p>
 
-                            <div className="my-review-actions">
+                                <p className="review-comment">
+                                    {review.comment}
+                                </p>
 
-                                <button
-                                    className="edit-review-btn"
-                                    onClick={() => editReview(review)}
-                                >
-                                    Edit Review
-                                </button>
+                                <div className="my-review-actions">
 
-                                <button
-                                    className="delete-review-btn"
-                                    onClick={() => deleteReview(review.id)}
-                                >
-                                    Delete Review
-                                </button>
+                                    <button
+                                        type="button"
+                                        className="edit-review-btn"
+                                        onClick={() => editReview(review)}
+                                    >
+                                        Edit Review
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="delete-review-btn"
+                                        onClick={() => deleteReview(review.id)}
+                                    >
+                                        Delete Review
+                                    </button>
+
+                                </div>
 
                             </div>
-
-                        </div>
-
-                    ))
+                        );
+                    })
 
                 )}
 

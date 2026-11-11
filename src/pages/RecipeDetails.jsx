@@ -1,4 +1,6 @@
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { recipes } from '../data/recipes';
@@ -112,7 +114,7 @@ function RecipeDetails() {
         setIsRunning(false);
         setProgressLoadedFor(recipe.id);
 
-    }, [recipe?.id]);
+    }, [recipe]);
 
     // Save cooking progress automatically
     useEffect(() => {
@@ -136,7 +138,7 @@ function RecipeDetails() {
         );
 
     }, [
-        recipe?.id,
+        recipe,
         progressLoadedFor,
         checkedIngredients,
         completedSteps,
@@ -251,7 +253,7 @@ function RecipeDetails() {
 
             alert('Recipe link copied successfully!');
 
-        } catch (error) {
+        } catch {
 
             alert(
                 'Unable to copy the link. Copy it from the browser address bar.'
@@ -289,7 +291,7 @@ function RecipeDetails() {
 
     }
 
-    // Share through email
+    // Share through Gmail
     function shareByEmail() {
 
         const recipeUrl = window.location.href;
@@ -299,8 +301,14 @@ function RecipeDetails() {
         const body =
             `Hello! Check out this delicious recipe: ${recipe.name}\n\n${recipeUrl}`;
 
-        window.location.href =
-            `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const gmailUrl =
+            `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        window.open(
+            gmailUrl,
+            '_blank',
+            'noopener,noreferrer'
+        );
 
     }
 
@@ -877,7 +885,10 @@ function RecipeDetails() {
 
             <div className="no-print">
 
-                <ReviewSection recipeId={recipe.id} />
+                <ReviewSection
+                    key={recipe.id}
+                    recipeId={recipe.id}
+                />
 
             </div>
 

@@ -1,53 +1,50 @@
 
 import { useEffect, useState } from 'react';
 
-function ReviewReports() {
+const storageKey = 'recipe-review-reports';
 
-    // State variables
-    const [reports, setReports] = useState([]);
-    const [filterStatus, setFilterStatus] = useState('Pending');
-    const [reportsLoaded, setReportsLoaded] = useState(false);
+// Load reports from localStorage
+function loadReports() {
 
-    const storageKey = 'recipe-review-reports';
-
-    // 1. Load reports from localStorage
-    useEffect(() => {
+    try {
 
         const savedReports = localStorage.getItem(storageKey);
 
-        if (savedReports) {
-            try {
-                const parsedReports = JSON.parse(savedReports);
-
-                setReports(
-                    Array.isArray(parsedReports) ? parsedReports : []
-                );
-
-            } catch (error) {
-                console.error('Unable to load reports:', error);
-                setReports([]);
-            }
-        } else {
-            setReports([]);
+        if (!savedReports) {
+            return [];
         }
 
-        setReportsLoaded(true);
+        const parsedReports = JSON.parse(savedReports);
 
-    }, []);
+        return Array.isArray(parsedReports) ? parsedReports : [];
 
-    // 2. Save reports to localStorage
+    } catch (error) {
+
+        console.error('Unable to load reports:', error);
+
+        return [];
+
+    }
+
+}
+
+function ReviewReports() {
+
+    // State variables
+    const [reports, setReports] = useState(loadReports);
+    const [filterStatus, setFilterStatus] = useState('Pending');
+
+    // Save reports to localStorage
     useEffect(() => {
-
-        if (!reportsLoaded) return;
 
         localStorage.setItem(
             storageKey,
             JSON.stringify(reports)
         );
 
-    }, [reports, reportsLoaded]);
+    }, [reports]);
 
-    // 3. Update report status
+    // Update report status
     function updateReportStatus(reportId, status) {
 
         setReports((previous) =>
@@ -60,7 +57,7 @@ function ReviewReports() {
 
     }
 
-    // 4. Hide or restore a reported review
+    // Hide or restore a reported review
     function updateReviewVisibility(report, shouldHide) {
 
         const reviewStorageKey =
@@ -140,7 +137,7 @@ function ReviewReports() {
 
     }
 
-    // 5. Filter reports
+    // Filter reports
     const filteredReports = reports.filter((report) => {
 
         if (filterStatus === 'All') {
@@ -151,7 +148,7 @@ function ReviewReports() {
 
     });
 
-    // 6. Report statistics
+    // Report statistics
     const pendingCount = reports.filter(
         (report) => report.status === 'Pending'
     ).length;

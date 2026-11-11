@@ -1,6 +1,46 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+// Load saved reviews from localStorage
+function loadSavedReviews(storageKey) {
+    try {
+        const savedReviews = localStorage.getItem(storageKey);
+
+        if (!savedReviews) {
+            return [];
+        }
+
+        const parsedReviews = JSON.parse(savedReviews);
+
+        return Array.isArray(parsedReviews) ? parsedReviews : [];
+
+    } catch (error) {
+        console.error('Unable to load reviews:', error);
+        return [];
+    }
+}
+
+// Load saved reports from localStorage
+function loadSavedReports() {
+    try {
+        const savedReports = localStorage.getItem(
+            'recipe-review-reports'
+        );
+
+        if (!savedReports) {
+            return [];
+        }
+
+        const parsedReports = JSON.parse(savedReports);
+
+        return Array.isArray(parsedReports) ? parsedReports : [];
+
+    } catch (error) {
+        console.error('Unable to load reports:', error);
+        return [];
+    }
+}
+
 function ReviewSection({ recipeId }) {
 
     // Reference to the review form
@@ -8,7 +48,6 @@ function ReviewSection({ recipeId }) {
 
     // Get logged-in user information
     function getLoggedInUser() {
-
         try {
             const savedUser =
                 localStorage.getItem('portalUser') ||
@@ -37,10 +76,21 @@ function ReviewSection({ recipeId }) {
         currentRole === 'moderator' ||
         currentRole === 'admin';
 
-    // Review states
-    const [reviews, setReviews] = useState([]);
+    // Storage keys
+    const storageKey = `recipe-reviews-${recipeId}`;
 
-    const [name, setName] = useState('');
+    const reportsStorageKey = 'recipe-review-reports';
+
+    // Review states
+    const [reviews, setReviews] = useState(
+        () => loadSavedReviews(storageKey)
+    );
+
+    const [name, setName] = useState(() => (
+        loggedInUser?.name ||
+        loggedInUser?.username ||
+        ''
+    ));
 
     const [rating, setRating] = useState(0);
 
@@ -61,128 +111,25 @@ function ReviewSection({ recipeId }) {
 
     const [reportDetails, setReportDetails] = useState('');
 
-    const [reports, setReports] = useState([]);
+    const [reports, setReports] = useState(loadSavedReports);
 
-    // Storage keys
-    const storageKey = `recipe-reviews-${recipeId}`;
-
-    const reportsStorageKey = 'recipe-review-reports';
-
-    // Loading states
-    const [reviewsLoadedFor, setReviewsLoadedFor] = useState(null);
-
-    const [reportsLoaded, setReportsLoaded] = useState(false);
-
-    // 1. Load logged-in user's name
+    // Save reviews automatically
     useEffect(() => {
-
-        setName(
-            loggedInUser?.name ||
-            loggedInUser?.username ||
-            ''
-        );
-
-    }, [
-        loggedInUser?.name,
-        loggedInUser?.username,
-        loggedInEmail
-    ]);
-
-    // 2. Load existing reviews
-    useEffect(() => {
-
-        setReviewsLoadedFor(null);
-
-        const savedReviews = localStorage.getItem(storageKey);
-
-        if (savedReviews) {
-
-            try {
-                const parsedReviews = JSON.parse(savedReviews);
-
-                setReviews(
-                    Array.isArray(parsedReviews)
-                        ? parsedReviews
-                        : []
-                );
-
-            } catch (error) {
-
-                console.error('Unable to load reviews:', error);
-
-                setReviews([]);
-            }
-
-        } else {
-
-            setReviews([]);
-        }
-
-        setReviewsLoadedFor(storageKey);
-
-    }, [storageKey]);
-
-    // 3. Save reviews automatically
-    useEffect(() => {
-
-        if (reviewsLoadedFor !== storageKey) {
-            return;
-        }
-
         localStorage.setItem(
             storageKey,
             JSON.stringify(reviews)
         );
+    }, [reviews, storageKey]);
 
-    }, [reviews, storageKey, reviewsLoadedFor]);
-
-    // 4. Load reported reviews
+    // Save reports automatically
     useEffect(() => {
-
-        const savedReports = localStorage.getItem(reportsStorageKey);
-
-        if (savedReports) {
-
-            try {
-                const parsedReports = JSON.parse(savedReports);
-
-                setReports(
-                    Array.isArray(parsedReports)
-                        ? parsedReports
-                        : []
-                );
-
-            } catch (error) {
-
-                console.error('Unable to load reports:', error);
-
-                setReports([]);
-            }
-
-        } else {
-
-            setReports([]);
-        }
-
-        setReportsLoaded(true);
-
-    }, []);
-
-    // 5. Save reports automatically
-    useEffect(() => {
-
-        if (!reportsLoaded) {
-            return;
-        }
-
         localStorage.setItem(
             reportsStorageKey,
             JSON.stringify(reports)
         );
+    }, [reports, reportsStorageKey]);
 
-    }, [reports, reportsLoaded]);
-
-    // 6. Create reviewer identity
+    // Create reviewer identity
     function getReviewerId(reviewerName) {
 
         if (loggedInEmail) {
@@ -192,11 +139,10 @@ function ReviewSection({ recipeId }) {
         return `name:${reviewerName.trim().toLowerCase()}`;
     }
 
-    // 7. Find current user's existing review
+    // Find current user's existing review
     const existingReview = reviews.find((review) => {
 
         if (loggedInEmail && review.reviewerId) {
-
             return review.reviewerId === `email:${loggedInEmail}`;
         }
 
@@ -206,7 +152,7 @@ function ReviewSection({ recipeId }) {
         );
     });
 
-    // 8. Filter reviews
+    // Filter reviews
     const filteredReviews = reviews.filter((review) => {
 
         if (review.isHidden && !canViewHiddenReviews) {
@@ -220,7 +166,7 @@ function ReviewSection({ recipeId }) {
         return Number(review.rating) === Number(filterRating);
     });
 
-    // 9. Sort reviews
+    // Sort reviews
     const visibleReviews = [...filteredReviews].sort((a, b) => {
 
         if (sortOption === 'latest') {
@@ -242,7 +188,7 @@ function ReviewSection({ recipeId }) {
         return 0;
     });
 
-    // 10. Calculate average rating safely
+    // Calculate average rating safely
     const totalRating = visibleReviews.reduce(
         (total, review) => {
 
@@ -260,7 +206,7 @@ function ReviewSection({ recipeId }) {
         ? (totalRating / visibleReviews.length).toFixed(1)
         : '0.0';
 
-    // 11. Submit or update review
+    // Submit or update review
     function handleSubmitReview(event) {
 
         event.preventDefault();
@@ -353,7 +299,7 @@ function ReviewSection({ recipeId }) {
         setComment('');
     }
 
-    // 12. Edit review
+    // Edit review
     function handleEditReview(review) {
 
         setEditingReviewId(review.id);
@@ -369,7 +315,7 @@ function ReviewSection({ recipeId }) {
 
         setComment(review.comment);
 
-        // Scroll to the review form instead of page top
+        // Scroll to the review form
         setTimeout(() => {
 
             reviewFormRef.current?.scrollIntoView({
@@ -380,7 +326,7 @@ function ReviewSection({ recipeId }) {
         }, 100);
     }
 
-    // 13. Cancel editing
+    // Cancel editing
     function cancelEdit() {
 
         setEditingReviewId(null);
@@ -396,7 +342,7 @@ function ReviewSection({ recipeId }) {
         setComment('');
     }
 
-    // 14. Delete review
+    // Delete review
     function handleDeleteReview(reviewId) {
 
         const confirmDelete = window.confirm(
@@ -416,7 +362,7 @@ function ReviewSection({ recipeId }) {
         alert('Review deleted successfully!');
     }
 
-    // 15. Submit a report
+    // Submit a report
     function handleReportReview(review) {
 
         if (!loggedInEmail && !name.trim()) {
@@ -493,7 +439,7 @@ function ReviewSection({ recipeId }) {
         );
     }
 
-    // 16. Cancel reporting
+    // Cancel reporting
     function cancelReport() {
 
         setReportingReviewId(null);
