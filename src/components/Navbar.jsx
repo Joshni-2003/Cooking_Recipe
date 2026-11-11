@@ -39,7 +39,7 @@ function Navbar() {
                 {/* User Links */}
                 {user?.role === 'user' && (
                     <>
-                        <Link to="/dashboard">Dashboard</Link>
+                        <Link to="/dashboard">User Dashboard</Link>
                         <Link to="/profile">My Profile</Link>
                         <Link to="/my-recipes">My Recipes</Link>
                         <Link to="/my-drafts">My Drafts</Link>
